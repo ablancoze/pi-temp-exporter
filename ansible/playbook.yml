@@ -1,0 +1,39 @@
+---
+-
+  name: temp_exporter_config
+  hosts: bjz01-tst-002
+  tasks:
+    - name: install pkg
+      become: yes
+      apt:
+        pkg: 
+        - python3
+        - git 
+        - python3-pip
+    
+    - name: install pyspectator datetime asyncore 
+      pip:
+        name: pyspectator,datetime
+        executable: pip3
+    
+    - name: Clone repository whit the code
+      ignore_errors: yes
+      git:
+        repo: https://github.com/ablancoze/pi-temp-exporter.git 
+        dest: $HOME/pi-temp-exporter
+-
+  name: temp_exporter_python config
+  hosts: bjz01-tst-002
+  tasks:
+    - name: run first time python script
+      script: ~/pi-temp-exporter/read-temp.py
+      args:
+        executable: python3
+    - name: create cronjob
+      become: yes
+      cron:
+        name: temp_exporter start
+        minute: "*/5"
+        job: "/bin/python3 ~/pi-temp-exporter/read-temp.py start"
+        cron_file: ansible_read-temp
+        user: vagrant
